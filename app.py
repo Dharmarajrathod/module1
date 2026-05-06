@@ -11,7 +11,12 @@ from pypdf import PdfReader
 
 
 APP_TITLE = "Module 1 Chatbot"
-DEFAULT_PDF_PATH = "/Users/dharmarajrathod/Downloads/Module 1 - Revised.pdf"
+DEFAULT_PDF_CANDIDATES = [
+    "/Users/dharmarajrathod/Downloads/Module 1 - Revised.pdf",
+    os.path.join(os.path.dirname(__file__), "Module 1 - Revised.pdf"),
+    os.path.join(os.path.dirname(__file__), "Module 1 - Prior Authorization Foundations and CoverMyMeds Workflow.pdf"),
+    os.path.join(os.path.dirname(__file__), "module1.pdf"),
+]
 DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 SYSTEM_PROMPT = (
     "You are PA Coach, a training chatbot based strictly on Module 1 Prior "
@@ -282,8 +287,10 @@ def load_knowledge_base_from_default_path(pdf_path: str) -> None:
 def ensure_default_pdf_loaded() -> None:
     if st.session_state.knowledge_chunks:
         return
-    if os.path.exists(DEFAULT_PDF_PATH):
-        load_knowledge_base_from_default_path(DEFAULT_PDF_PATH)
+    for pdf_path in DEFAULT_PDF_CANDIDATES:
+        if os.path.exists(pdf_path):
+            load_knowledge_base_from_default_path(pdf_path)
+            return
 
 
 def main() -> None:
@@ -311,7 +318,14 @@ def main() -> None:
         st.warning("Set the GEMINI_API_KEY or GOOGLE_API_KEY environment variable before starting a chat.")
 
     if not st.session_state.knowledge_chunks:
-        st.info("Load the Module 1 PDF from the sidebar to begin.")
+        st.info("Upload the Module 1 PDF to begin, or add the PDF file to the app repository.")
+        uploaded_file = st.file_uploader("Upload Module 1 PDF", type=["pdf"])
+        if uploaded_file is not None:
+            try:
+                load_knowledge_base_from_upload(uploaded_file)
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Unable to load uploaded PDF: {exc}")
         return
 
     for message in st.session_state.messages:
