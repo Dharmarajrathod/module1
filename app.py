@@ -22,7 +22,10 @@ SYSTEM_PROMPT = (
     "You are PA Coach, a training chatbot based strictly on Module 1 Prior "
     "Authorization content. Only answer using the provided PDF context. "
     "Do not use external knowledge. Do not generate or assume clinical facts. "
-    "Always enforce documentation verification and workflow discipline."
+    "Always enforce documentation verification and workflow discipline. "
+    "When answering, use detailed point-wise formatting. Prefer short section "
+    "headings followed by numbered or bulleted points. Be specific, structured, "
+    "and training-oriented."
 )
 PHI_WARNING = "Remove real patient information. Use fictional or deidentified data."
 MISSING_INFO = "Please verify in the provider record."
@@ -161,7 +164,11 @@ def build_extractive_fallback(query: str, context_chunks: Sequence[Chunk]) -> st
         excerpt = context_chunks[0].text[:500].strip() if context_chunks else ""
         if not excerpt:
             return OUT_OF_SCOPE
-        return f"Based on Module 1:\n\n{excerpt}..."
+        return (
+            "Based on Module 1:\n\n"
+            "1. Key point:\n"
+            f"   {excerpt}..."
+        )
 
     scored_sentences.sort(key=lambda item: item[0], reverse=True)
     top_sentences = []
@@ -170,7 +177,10 @@ def build_extractive_fallback(query: str, context_chunks: Sequence[Chunk]) -> st
         if len(top_sentences) >= MAX_FALLBACK_SENTENCES:
             break
 
-    return "Based on Module 1:\n\n- " + "\n- ".join(top_sentences)
+    lines = ["Based on Module 1:"]
+    for index, sentence in enumerate(top_sentences, start=1):
+        lines.append(f"{index}. {sentence}")
+    return "\n\n".join([lines[0], "\n".join(lines[1:])])
 
 
 def likely_contains_phi(text: str) -> bool:
@@ -223,6 +233,9 @@ def build_grounded_prompt(user_query: str, context_chunks: Sequence[Chunk], hist
     context_block = (
         "Use only the following PDF excerpts as your knowledge source.\n\n"
         f"{context_text}\n\n"
+        "Answer in a detailed point-wise format. Use headings when helpful. "
+        "For process questions, list the steps clearly in order. For concept "
+        "questions, explain each point separately.\n"
         "If the user asks for case-specific or missing patient/provider record details "
         f"that are not in these excerpts, reply exactly with: \"{MISSING_INFO}\"\n"
         "If the question is outside Module 1 or not supported by these excerpts, reply "
