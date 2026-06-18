@@ -13,8 +13,8 @@ from pypdf import PdfReader
 
 APP_TITLE = "Compliance Module 1 Chatbot"
 DEFAULT_PDF_CANDIDATES = [
-    "/Users/dharmarajrathod/Downloads/Compliance - Revised Module 1 (1).pdf",
     os.path.join(os.path.dirname(__file__), "Compliance - Revised Module 1 (1).pdf"),
+    "/Users/dharmarajrathod/Downloads/Compliance - Revised Module 1 (1).pdf",
     "/Users/dharmarajrathod/Downloads/Module 1 - Revised.pdf",
     os.path.join(os.path.dirname(__file__), "Module 1 - Revised.pdf"),
     os.path.join(os.path.dirname(__file__), "Module 1 - Prior Authorization Foundations and CoverMyMeds Workflow.pdf"),
